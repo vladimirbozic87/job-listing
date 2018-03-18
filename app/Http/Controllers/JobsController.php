@@ -64,7 +64,7 @@ class JobsController extends Controller
 
         $job->name        = $request->input('name');
         $job->description = $request->input('description');
-        $job->deadline    = $request->input('deadline');
+        $job->deadline    = date("Y-m-d", strtotime($request->input('deadline')));
 
         $job->save();
 
