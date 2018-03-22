@@ -20,8 +20,8 @@ class JobsController extends Controller
     {
         $search = $request->input('search');
 
-        $jobs = Job::where('name', 'ilike', "%$search%")->paginate(4);
-        //$jobs = Job::where('name', 'like', "%$search%")->paginate(4);
+        $jobs = Job::where('name', 'ilike', "%$search%")->paginate(3);
+        //$jobs = Job::where('name', 'like', "%$search%")->paginate(3);
 
         return view('jobs.jobs')
             ->with('jobs', $jobs)

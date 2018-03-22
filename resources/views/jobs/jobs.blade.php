@@ -69,6 +69,7 @@
 
                                     @if(
                                       \Illuminate\Support\Facades\Auth::check() &&
+                                      \Illuminate\Support\Facades\Auth::user()->company &&
                                       \Illuminate\Support\Facades\Auth::user()->company->id == $job->company->id
                                     )
                                         <a href="{{ route('get-edit-job', [$job->name]) }}" class="btn btn-primary"> Edit </a>

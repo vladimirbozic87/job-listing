@@ -33,9 +33,11 @@
                                     <div class="panel-heading">Create Credentials (OAuth Client ID)</div>
                                     <div class="panel-body">
                                         1. Go to page <a target="_blank" href="http://developers.google.com/console">Google API console</a><br>
-                                        2. Credentials -> Create Credentials then pick <b>OAuth Client ID</b><br>
-                                        3. In the section Application type pick <b>Other</b><br>
-                                        4. Then download your <b>json client secret</b> file and upload here
+                                        2. Go to Dashboard -> Enabled Apis and Services -> Google Drive Api -> <b style="color:red">ENABLED</b><br>
+                                        3. Credentials -> Create or Select Project<br>
+                                        4. Credentials -> Create Credentials then pick <b>OAuth Client ID</b><br>
+                                        5. In the section Application type pick <b>Other</b><br>
+                                        6. Then download your <b>json client secret</b> file and upload here
                                     </div>
                                 </div>
                             </div>
