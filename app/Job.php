@@ -12,7 +12,7 @@ class Job extends Model
      * @var array
      */
     protected $fillable = [
-        'name', 'description', 'deadline',
+        'name', 'description', 'deadline', 'user_id', 'company_id',
     ];
 
     /**
@@ -32,6 +32,11 @@ class Job extends Model
           'job_id',
           'candidate_id'
       );
+    }
+
+    public function company()
+    {
+        return $this->hasOne('App\Company', 'id', 'company_id');
     }
 
 }

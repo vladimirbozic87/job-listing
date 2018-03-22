@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Candidate;
 use App\Job;
+use GoogleClientApi\GoogleClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class JobsController extends Controller
@@ -18,6 +21,7 @@ class JobsController extends Controller
         $search = $request->input('search');
 
         $jobs = Job::where('name', 'ilike', "%$search%")->paginate(4);
+        //$jobs = Job::where('name', 'like', "%$search%")->paginate(4);
 
         return view('jobs.jobs')
             ->with('jobs', $jobs)
@@ -62,9 +66,13 @@ class JobsController extends Controller
 
         $job = new Job();
 
+        $company_id = Auth::user()->company->id;
+
         $job->name        = $request->input('name');
         $job->description = $request->input('description');
         $job->deadline    = date("Y-m-d", strtotime($request->input('deadline')));
+        $job->user_id     = Auth::user()->id;
+        $job->company_id  = $company_id;
 
         $job->save();
 
@@ -94,9 +102,13 @@ class JobsController extends Controller
 
         $job = Job::where('name', $job_name)->get()->first();
 
+        $company_id = Auth::user()->company->id;
+
         $job->name        = $request->input('name');
         $job->description = $request->input('description');
         $job->deadline    = date("Y-m-d", strtotime($request->input('deadline')));
+        $job->user_id     = Auth::user()->id;
+        $job->company_id  = $company_id;
 
         $job->save();
 
@@ -137,13 +149,20 @@ class JobsController extends Controller
             'letter_file'       => 'mimes:pdf,txt,docx,doc',
         ]);
 
-        $file = $request->file('cv_file');
+        $file  = $request->file('cv_file');
+        $file2 = $request->file('letter_file');
 
-        $name = $file->getClientOriginalName();
+        $ext       = $file->extension();
+        $name      = $request->input('email') . '-' . $job_name .'-cv.' . $ext;
+        $file_path = base_path() . '/public/uploads/' . $name;
 
-        $file->move(base_path() . '/public/uploads/',$name);
+        $file_path2 = "";
 
-        //dd($file);
+        if ($file2) {
+            $ext2       = $file2->extension();
+            $name2      = $request->input('email') . '-' . $job_name . '-cover-letter.' . $ext2;
+            $file_path2 = base_path() . '/public/uploads/' . $name2;
+        }
 
         $job = Job::where('name', $job_name)->get()->first();
 
@@ -157,8 +176,8 @@ class JobsController extends Controller
             $candidate->fullname          = $request->input('fullname');
             $candidate->email             = $request->input('email');
             $candidate->phone             = $request->input('phone') ? $request->input('phone') : '';
-            $candidate->cover_letter_path = "";
-            $candidate->cv_path           = "";
+            $candidate->cover_letter_path = $file_path2;
+            $candidate->cv_path           = $file_path;
 
             $candidate->save();
         }
@@ -167,6 +186,36 @@ class JobsController extends Controller
 
         if ( ! $check) {
             $job->candidates()->attach($candidate);
+
+            $file->move(base_path() . '/public/uploads/',$name);
+
+            $token_path = explode('/', $job->company->token_path);
+            $token      = end($token_path);
+
+            $client = new GoogleClient($job->company->client_secret_path, $token);
+
+            $client->googleUploadFile($name, $file_path);
+
+            if ($file2) {
+                $file2->move(base_path() . '/public/uploads/',$name2);
+                $client->googleUploadFile($name2, $file_path2);
+            }
+
+            $app_name = 'app-' . $candidate->email . '-' . $job->name . '.txt';
+
+            $app_content  = "Job Application\n";
+            $app_content .= "Job Name: "        . $job->name . "\n";
+            $app_content .= "Job Description: " . $job->description . "\n";
+            $app_content .= "Job Deadline: "    . $job->deadline . "\n";
+            $app_content .= "Applicant Name: "  . $candidate->fullname . "\n";
+            $app_content .= "Applicant Email: " . $candidate->email . "\n";
+            $app_content .= "Applicant Phone: " . $candidate->phone . "\n";
+
+            Storage::put($app_name, $app_content);
+
+            $app_path = base_path() . '/storage/app/' . $app_name;
+
+            $client->googleUploadFile($app_name, $app_path);
 
             return view('jobs.apply')
                 ->with('job_name', $job_name)
